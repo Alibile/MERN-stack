@@ -34,8 +34,8 @@
     "moduleResolution": "NodeNext"
   },
   "keywords": [],
-  "description": "",
   "devDependencies": {
     "@types/ejs": "^3.1.5"
-  }
+  },
+  "description": ""
 }
