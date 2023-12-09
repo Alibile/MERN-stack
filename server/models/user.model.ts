@@ -71,11 +71,11 @@ userSchema.pre<IUser>("save", async function (next) {
 
 //sing access token
 userSchema.methods.SingAccessToken =  function () {
-  return jwt.sign({id: this._id},process.env.ACCESS_TOKEN || "")
+  return jwt.sign({id: this._id},process.env.ACCESS_TOKEN || "",{expiresIn: "5m"})
 }
 //sing refresh token
 userSchema.methods.SingRefreshToken = function ()  {
-  return jwt.sign({id: this._id},process.env.REFRESH_TOKEN || "")
+  return jwt.sign({id: this._id},process.env.REFRESH_TOKEN || "",{expiresIn: "3d"})
 }
 
 //compare password,
