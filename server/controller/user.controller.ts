@@ -15,6 +15,7 @@ import {
 } from "../utils/jwt";
 import { redis } from "../utils/redis";
 import { getUserById } from "../services/user.service";
+import cloudinary from "cloudinary";
 //register
 
 interface IRegistrationBody {
@@ -200,7 +201,7 @@ export const updateAccessToken = CatchAsyncError(
         process.env.REFRESH_TOKEN as string,
         { expiresIn: "3d" }
       );
-      req.user = user
+      req.user = user;
       res.cookie("access_token", accessToken, accessTokenOptions);
       res.cookie("refresh_token", refreshToken, refreshTokenOptions);
       res.status(200).json({ status: "success", accessToken });
@@ -266,7 +267,7 @@ export const updateUserInfo = CatchAsyncError(
     try {
       const { name, email } = req.body as IUpdateUserInfo;
       const userId = req.user?._id;
-      const user = await userModel.findOne( userId );
+      const user = await userModel.findOne(userId);
       if (email && user) {
         const isEmailExist = await userModel.findOne({ email });
         if (isEmailExist) {
@@ -275,11 +276,11 @@ export const updateUserInfo = CatchAsyncError(
         user.email = email;
       }
       if (name && user) {
-       user.name = name
+        user.name = name;
       }
       await user?.save();
-      await redis.set(userId,JSON.stringify(user));
-      res.status(201).json({success:true,user})
+      await redis.set(userId, JSON.stringify(user));
+      res.status(201).json({ success: true, user });
     } catch (error) {
       console.log(error);
       return next(new ErrorHandler(error.message, 400));
@@ -288,7 +289,7 @@ export const updateUserInfo = CatchAsyncError(
 );
 
 ///update password
- interface IUpdatePassword {
+interface IUpdatePassword {
   oldPassword: string;
   newPassword: string;
 }
@@ -303,17 +304,62 @@ export const updatePassword = CatchAsyncError(
       const user = await userModel.findById(userId).select("+password");
       if (user?.password === undefined) {
         return next(new ErrorHandler("invalid user", 400));
-       }
-      const oldPasswordMatch = await user.comparePassword(oldPassword)
+      }
+      const oldPasswordMatch = await user.comparePassword(oldPassword);
       if (!oldPasswordMatch) {
-          return next(new ErrorHandler("invalid old password", 400));
-        }
+        return next(new ErrorHandler("invalid old password", 400));
+      }
       user.password = newPassword;
       await user.save();
-      await redis.set(req.user?._id,JSON.stringify(user))
-      res.status(201).json({success:true,user})
-    } catch (error) {    
+      await redis.set(req.user?._id, JSON.stringify(user));
+      res.status(201).json({ success: true, user });
+    } catch (error) {
       return next(new ErrorHandler(error.message, 400));
     }
   }
-); 
+);
+
+// update profile picture
+
+interface IUpdateProfilePicture {
+  avatar: string;
+}
+export const updateProfilePicture = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { avatar } = req.body as IUpdateProfilePicture;
+      const userId = req.user._id;
+
+      const user = await userModel.findById(userId);
+      if (avatar && user) {
+        //if user have one avatar then call this if
+        if (user?.avatar?.public_id) {
+          //first delete the old image
+          await cloudinary.v2.uploader.destroy(user?.avatar?.public_id);
+          const myCloud = await cloudinary.v2.uploader.upload(avatar, {
+            folder: "avatars",
+            width: 150,
+          });
+          user.avatar = {
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url,
+          };
+        } else {
+          const myCloud = await cloudinary.v2.uploader.upload(avatar, {
+            folder: "avatars",
+            width: 150,
+          });
+          user.avatar = {
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url,
+          };
+        }
+      }
+      await user?.save();
+      await redis.set(userId, JSON.stringify(user));
+      res.status(201).json({ success: true, user });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
