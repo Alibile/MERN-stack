@@ -17,8 +17,6 @@ app.use(
 );
 
 //routes
-console.log(courseRouter);
-
 app.use("/api/v1", useRouter);
 app.use("/api/v1", courseRouter);
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {

@@ -8,22 +8,19 @@ import {createCourse} from "../services/course.service"
 //upload course
 export const uploadCourse = CatchAsyncError(async(req:Request,res:Response,next:NextFunction) => {
     try {
-        const data =  req.body;
+        const data = req.body;
         const thumbnail = data.thumbnail
-        if (thumbnail) {
-            const myCloud = await cloudinary.v2.uploader.upload(thumbnail,{
+        if (thumbnail.url) {
+            const myCloud = await cloudinary.v2.uploader.upload(thumbnail.url, {
                 folder:"courses",
-                width: 150,
             });
-            data.thumbnail ={
-                public_id:myCloud.public_id,
-                url:myCloud.secure_url
+            data.thumbnail = {
+                public_id: myCloud.public_id,
+                url: myCloud.secure_url
             }
         }
-        createCourse(data,res,next)
-    } catch (error) {
-        console.log(error);
-        
+        createCourse(data, res, next)
+    } catch (error:any) {
         return next(new ErrorHandler(error.message, 500))
     }
 })
