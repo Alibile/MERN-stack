@@ -160,10 +160,8 @@ export const logoutUser = CatchAsyncError(
       res.cookie("refresh_token", "", { maxAge: 1 });
       const userId = req.user?._id || "";
       redis.del(userId);
-      console.log(res);
 
-      res
-        .status(200)
+      res.status(200)
         .json({ success: true, message: "Logged out successfully" });
     } catch (error) {
       return next(new ErrorHandler(error.message, 400));
@@ -236,7 +234,6 @@ export const socialAuth = CatchAsyncError(
     try {
       const { email, name, avatar, password } = req.body as ISocialAuthBody;
       const user = await userModel.findOne({ email });
-      console.log("dirdim");
       debugger;
       if (!user) {
         const newUser = await userModel.create({
