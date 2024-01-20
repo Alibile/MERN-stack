@@ -6,5 +6,5 @@ console.log(couseRouter);
 
 couseRouter.post('/create-course',isAuthenticated, authorizeRole("admin"), uploadCourse)
 couseRouter.put('/edit-course/:id',isAuthenticated, authorizeRole("admin"), editCourse)
-couseRouter.get('/get-course/:id',isAuthenticated, authorizeRole("admin"), getSingleCourse)
+couseRouter.get('/get-course/:id', getSingleCourse)
 export default couseRouter
