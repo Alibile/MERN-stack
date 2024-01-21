@@ -211,12 +211,12 @@ export const addAnswer = CatchAsyncError(
       }
       //create a new answer object
       const question = courseContent?.questions?.find((item: any) =>
-      item._id.equals(questionId)
-    );
-    if (!question) {
-      return next(new ErrorHandler("Invalid content id", 400));
-    }
-    
+        item._id.equals(questionId)
+      );
+      if (!question) {
+        return next(new ErrorHandler("Invalid content id", 400));
+      }
+
       const newAnswer: any = {
         user: req.user,
         answer,
@@ -228,23 +228,82 @@ export const addAnswer = CatchAsyncError(
       await course?.save();
       if (req.user._id === question.user._id) {
         //create a notification
-
       } else {
-        const data = {name: question.user.name,title:courseContent.title}
-        const html =  await ejs.renderFile(path.join(__dirname,"../mails/question-reply.ejs"),data);
+        const data = { name: question.user.name, title: courseContent.title };
+        const html = await ejs.renderFile(
+          path.join(__dirname, "../mails/question-reply.ejs"),
+          data
+        );
 
         try {
           await sendMail({
             email: question.user.email,
-            subject:"Question Reply",
-            template:"question-reply.ejs",data
-          })
+            subject: "Question Reply",
+            template: "question-reply.ejs",
+            data,
+          });
         } catch (error) {
           return next(new ErrorHandler(error.message, 500));
         }
       }
       res.status(200).json({ success: true, course });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
 
+//add review in course
+
+interface IAddReview {
+  review: string;
+  courseId: string;
+  rating: number;
+  userId: string;
+}
+
+export const addReview = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userCourseList = req.user?.courses;
+      const courseId = req.params.id;
+
+      //check if course Already exists in usercourselist based on _id
+
+      const courseExits = userCourseList?.some(
+        (course: any) => course._id.toString() === courseId.toString()
+      );
+      if (!courseExits) {
+        return next(
+          new ErrorHandler("You are not eligible to access this course", 404)
+        );
+      }
+
+      const course = await CourseModel.findById(courseId);
+      const { review, rating } = req.body as IAddReview;
+      const reviewData: any = {
+        user: req.user,
+        comment: review,
+        rating,
+      };
+      course?.reviews.push(reviewData);
+      let avg = 0;
+
+      course?.reviews.forEach((review) => {
+        avg += review.rating;
+      });
+      if (course) {
+        course.ratings = avg / course.reviews.length;
+      }
+
+      await course?.save();
+      const notification = {
+        title: "new Review Received",
+        message: `${req.user?.name} has given a review in ${course?.name}`,
+      };
+
+      //create notification
+      res.status(200).json({ success: true, course });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
     }
