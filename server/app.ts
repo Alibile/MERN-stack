@@ -6,6 +6,7 @@ require("dotenv").config();
 import { ErrorMiddleware } from "./middleWare/error";
 import useRouter from "./routes/user.route";
 import courseRouter from "./routes/course.route";
+import orderRouter from "./routes/order.route";
 app.use(express.json({ limit: "50mb" }));
 
 app.use(cookieParser());
@@ -17,8 +18,7 @@ app.use(
 );
 
 //routes
-app.use("/api/v1", useRouter);
-app.use("/api/v1", courseRouter);
+app.use("/api/v1", useRouter,orderRouter,courseRouter);
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {
   res.status(200).json({
     success: true,
