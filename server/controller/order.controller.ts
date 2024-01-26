@@ -21,6 +21,7 @@ export const createOrder = CatchAsyncError(async (req:Request, res:Response,next
         }
 
         const course = await CourseModel.findById(courseId);
+    
         if (!course) {
             return next(new ErrorHandler("Course not found",404))
         }
@@ -30,7 +31,7 @@ export const createOrder = CatchAsyncError(async (req:Request, res:Response,next
            userId: user?._id,
            payment_info,
         }
-        newOrder(data,res,next);
+      
         const mailData:any = {
             order:{
                 _id:course._id.toString().slice(0,6),
@@ -39,9 +40,10 @@ export const createOrder = CatchAsyncError(async (req:Request, res:Response,next
                 date: new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})
             }
         }
+      console.log("dddd",user);
         const html = await ejs.renderFile(path.join(__dirname, "../mails/order-confirmation.ejs"),{order:mailData})
         try {
-            if (user) {
+            if (user) { 
                 await sendMail({
                     email:user.email,
                     subject:"order Conformation",
@@ -50,9 +52,12 @@ export const createOrder = CatchAsyncError(async (req:Request, res:Response,next
                 })
             }
         } catch (error) {
+          
             return next(new ErrorHandler(error.message,500));
         }
-
+  
+        
+        
         user?.courses.push(course?._id);
          await user?.save();
          await NotificationModel.create({
@@ -60,7 +65,7 @@ export const createOrder = CatchAsyncError(async (req:Request, res:Response,next
             title:"New Order",
             message:`You have a new order from ${course?.name}`,
         });
-        
+        newOrder(data,res,next);
     } catch (error) {
         return next(new ErrorHandler(error.message,500));
     }
