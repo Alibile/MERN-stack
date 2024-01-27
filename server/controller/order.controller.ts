@@ -40,7 +40,6 @@ export const createOrder = CatchAsyncError(async (req:Request, res:Response,next
                 date: new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})
             }
         }
-      console.log("dddd",user);
         const html = await ejs.renderFile(path.join(__dirname, "../mails/order-confirmation.ejs"),{order:mailData})
         try {
             if (user) { 
@@ -52,12 +51,9 @@ export const createOrder = CatchAsyncError(async (req:Request, res:Response,next
                 })
             }
         } catch (error) {
-          
             return next(new ErrorHandler(error.message,500));
         }
-  
-        
-        
+
         user?.courses.push(course?._id);
          await user?.save();
          await NotificationModel.create({
