@@ -67,7 +67,6 @@ export const editCourse = CatchAsyncError(
 );
 
 // get single course --- with out purchasing
-
 export const getSingleCourse = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {

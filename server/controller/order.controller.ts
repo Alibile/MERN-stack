@@ -40,6 +40,7 @@ export const createOrder = CatchAsyncError(async (req:Request, res:Response,next
                 date: new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})
             }
         }
+        
         const html = await ejs.renderFile(path.join(__dirname, "../mails/order-confirmation.ejs"),{order:mailData})
         try {
             if (user) { 
@@ -61,10 +62,9 @@ export const createOrder = CatchAsyncError(async (req:Request, res:Response,next
             title:"New Order",
             message:`You have a new order from ${course?.name}`,
         });
-        if (course.purchased) {
-            course.purchased=+1
-        }
-     await course.save();
+
+        course.purchased ? course.purchased=+1: course.purchased
+        await course.save();
         newOrder(data,res,next);
     } catch (error) {
         return next(new ErrorHandler(error.message,500));
